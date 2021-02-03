@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageButton;
 
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
                 ContentValues cv=new ContentValues();
                 //name of the file
-                cv.put(MediaStore.Images.Media.DISPLAY_NAME, "gfg.png");
+                cv.put(MediaStore.Images.Media.DISPLAY_NAME, "drawing.png");
                 //type of the file
                 cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
                 //location of the file to be saved
@@ -134,13 +135,21 @@ public class MainActivity extends AppCompatActivity {
         rangeSlider.addOnChangeListener(new RangeSlider.OnChangeListener() {
             @Override
             public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
-                paint.setStrokeWidth((int)value);
+                paint.setStrokeWidth((int) value);
             }
         });
 
-        //get the displaymetrics of the screen and pass it to the init method of the DrawView object
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        paint.init(metrics);
+        //pass the height and width of the custom view to the init method of the DrawView object
+        ViewTreeObserver vto = paint.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+
+                paint.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                int width = paint.getMeasuredWidth();
+                int height = paint.getMeasuredHeight();
+                paint.init(height, width);
+            }
+        });
     }
 }

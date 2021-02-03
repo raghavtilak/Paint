@@ -46,16 +46,13 @@ public class DrawView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        //0xff=255 in decimal
         mPaint.setAlpha(0xff);
 
     }
 
     //this method instantiate the bitmap and object
-    public void init(DisplayMetrics metrics) {
-        //the DisplayMetrics object is responsible to define
-        //the width and height of the DrawView
-        int height = metrics.heightPixels;
-        int width = metrics.widthPixels;
+    public void init(int height, int width) {
 
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);

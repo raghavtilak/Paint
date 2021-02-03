@@ -11,18 +11,23 @@
         android:id="@+id/linear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/btn_undo"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@drawable/ic_undo"
-            android:text="Undo" />
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btn_save"
+            <ImageButton
+                android:id="@+id/btn_undo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_undo"
+                android:text="Undo" />
+
+            <ImageButton
+                android:id="@+id/btn_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -37,22 +42,27 @@
             android:src="@drawable/ic_colorpicker"
             android:text="Color" />
 
-        <ImageButton
-            android:id="@+id/btn_stroke"
-            android:layout_width="wrap_content"
+            <ImageButton
+                android:id="@+id/btn_stroke"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_paint_brush"
+                android:text="Stroke" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@drawable/ic_paint_brush"
-            android:text="Stroke" />
+            android:orientation="vertical">
 
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/rangebar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
-
-    <com.google.android.material.slider.RangeSlider
-        android:id="@+id/rangebar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/linear"
-        android:visibility="gone" />
 
     <com.raghav.paint.DrawView
         android:id="@+id/draw_view"
