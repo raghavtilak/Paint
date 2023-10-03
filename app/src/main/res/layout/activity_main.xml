@@ -28,19 +28,19 @@
 
             <ImageButton
                 android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@drawable/ic_floppy_disk"
-            android:text="Save" />
+                android:layout_width="104dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_floppy_disk"
+                android:text="Save" />
 
-        <ImageButton
-            android:id="@+id/btn_color"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:src="@drawable/ic_colorpicker"
-            android:text="Color" />
+            <ImageButton
+                android:id="@+id/btn_color"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_colorpicker"
+                android:text="Color" />
 
             <ImageButton
                 android:id="@+id/btn_stroke"
@@ -49,6 +49,16 @@
                 android:layout_weight="1"
                 android:src="@drawable/ic_paint_brush"
                 android:text="Stroke" />
+
+            <ImageButton
+                android:id="@+id/btn_redo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:contentDescription="@string/redo"
+                android:scaleX="-1"
+                android:src="@drawable/ic_undo"
+                android:text="@string/redo" />
         </LinearLayout>
 
         <LinearLayout

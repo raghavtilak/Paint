@@ -25,6 +25,7 @@ class DrawView(context: Context, attributeSet: AttributeSet) : View(context, att
 
     // Stack to store all the strokes drawn by the user on the Canvas
     private val strokeHistory = Stack<Stroke>()
+    private val redoStack = Stack<Stroke>()
     private var currentColor = 0
     private var strokeWidth = 0
     private lateinit var mBitmap: Bitmap
@@ -66,7 +67,16 @@ class DrawView(context: Context, attributeSet: AttributeSet) : View(context, att
     fun undo() {
         //check whether the Stack is empty or not
         if (strokeHistory.isNotEmpty()) {
-            strokeHistory.pop()
+            val lastStroke = strokeHistory.pop()
+            redoStack.push(lastStroke)
+            invalidate()
+        }
+    }
+
+    fun redo() {
+        if (redoStack.isNotEmpty()) {
+            val latestStroke = redoStack.pop()
+            strokeHistory.push(latestStroke)
             invalidate()
         }
     }
@@ -102,6 +112,7 @@ class DrawView(context: Context, attributeSet: AttributeSet) : View(context, att
         mPath = Path()
         val fp = Stroke(currentColor, strokeWidth, mPath)
         strokeHistory.push(fp)
+        redoStack.clear()
 
         //finally remove any curve or line from the path
         mPath.reset()
