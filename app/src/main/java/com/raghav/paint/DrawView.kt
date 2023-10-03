@@ -1,14 +1,18 @@
 package com.raghav.paint
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import java.util.Stack
 import kotlin.math.abs
 
-
-class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
+class DrawView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
 
     private val TOUCH_TOLERANCE = 4f
     private var mX = 0f
@@ -19,8 +23,8 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
     //how to draw the geometries,text and bitmaps
     private var mPaint: Paint = Paint()
 
-    //ArrayList to store all the strokes drawn by the user on the Canvas
-    private val paths = mutableListOf<Stroke>()
+    // Stack to store all the strokes drawn by the user on the Canvas
+    private val strokeHistory = Stack<Stroke>()
     private var currentColor = 0
     private var strokeWidth = 0
     private lateinit var mBitmap: Bitmap
@@ -28,30 +32,28 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
     private val mBitmapPaint = Paint(Paint.DITHER_FLAG)
 
     init {
-
-        //the below methods smoothens the drawings of the user
-        //the below methods smoothens the drawings of the user
-        mPaint.isAntiAlias = true
-        mPaint.isDither = true
-        mPaint.color = Color.GREEN
-        mPaint.style = Paint.Style.STROKE
-        mPaint.strokeJoin = Paint.Join.ROUND
-        mPaint.strokeCap = Paint.Cap.ROUND
-        //0xff=255 in decimal
-        mPaint.alpha = 0xff
+        mPaint.apply {
+            isAntiAlias = true // smoothens the drawings of the user
+            isDither = true
+            color = Color.GREEN
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+            alpha = 0xff // 0xff=255 in decimal
+        }
     }
 
     fun init(height: Int, width: Int) {
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         mCanvas = Canvas(mBitmap)
 
-        //set an initial color of the brush
+        // set initial brush color
         currentColor = Color.GREEN
-        //set an initial brush size
+        // set initial brush size
         strokeWidth = 20
     }
 
-    //sets the current color of stroke
+    // sets the current color of stroke
     fun setColor(color: Int) {
         currentColor = color
     }
@@ -62,18 +64,15 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
     }
 
     fun undo() {
-        //check whether the List is empty or not
-        //if empty, the remove method will return an error
-        if (paths.size != 0) {
-            paths.removeAt(paths.size - 1)
+        //check whether the Stack is empty or not
+        if (strokeHistory.isNotEmpty()) {
+            strokeHistory.pop()
             invalidate()
         }
     }
 
-    //this methods returns the current bitmap
-    fun save(): Bitmap? {
-        return mBitmap
-    }
+    // returns the current bitmap
+    fun save(): Bitmap = mBitmap
 
     //this is the main method where the actual drawing takes place
     override fun onDraw(canvas: Canvas) {
@@ -82,15 +81,16 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
         canvas.save()
         //DEFAULT color of the canvas
         val backgroundColor = Color.WHITE
-        mCanvas!!.drawColor(backgroundColor)
+        mCanvas.drawColor(backgroundColor)
 
-        //now, we iterate over the list of paths and draw each path on the canvas
-        for (fp in paths) {
-            mPaint.color = fp.color
-            mPaint.strokeWidth = fp.strokeWidth.toFloat()
-            mCanvas.drawPath(fp.path, mPaint)
+        // now, we iterate over stroke history and draw each path on the canvas
+        strokeHistory.forEach { stroke ->
+            mPaint.color = stroke.color
+            mPaint.strokeWidth = stroke.strokeWidth.toFloat()
+            mCanvas.drawPath(stroke.path, mPaint)
         }
-        canvas.drawBitmap(mBitmap!!, 0f, 0f, mBitmapPaint)
+
+        canvas.drawBitmap(mBitmap, 0f, 0f, mBitmapPaint)
         canvas.restore()
     }
 
@@ -101,7 +101,7 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
     private fun touchStart(x: Float, y: Float) {
         mPath = Path()
         val fp = Stroke(currentColor, strokeWidth, mPath)
-        paths.add(fp)
+        strokeHistory.push(fp)
 
         //finally remove any curve or line from the path
         mPath.reset()
@@ -142,10 +142,12 @@ class DrawView(c: Context, attributeSet: AttributeSet) : View(c, attributeSet) {
                 touchStart(x, y)
                 invalidate()
             }
+
             MotionEvent.ACTION_MOVE -> {
                 touchMove(x, y)
                 invalidate()
             }
+
             MotionEvent.ACTION_UP -> {
                 touchUp()
                 invalidate()
