@@ -2,7 +2,7 @@ package com.raghav.paint
 
 import android.graphics.Path
 
-data class Stroke(
+class Stroke(
 
     //color of the stroke
     var color: Int,
@@ -10,4 +10,5 @@ data class Stroke(
     var strokeWidth: Int,
     //a Path object to represent the path drawn
     var path: Path
+
 )
