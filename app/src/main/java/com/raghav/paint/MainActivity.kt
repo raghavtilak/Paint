@@ -45,6 +45,8 @@ class MainActivity : AppCompatActivity() {
         //the undo button will remove the most recent stroke from the canvas
         binding.btnUndo.setOnClickListener { binding.drawView.undo() }
 
+        binding.btnRedo.setOnClickListener { binding.drawView.redo() }
+
         //the save button will save the current canvas which is actually a bitmap
         //in form of PNG, in the storage
         binding.btnSave.setOnClickListener {
