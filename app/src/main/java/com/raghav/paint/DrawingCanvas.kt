@@ -1,43 +1,76 @@
 package com.raghav.paint
 
+import android.app.Activity
+import android.graphics.Bitmap
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.raghav.paint.ui.theme.PaintTheme
+import com.raghav.paint.util.createFile
 
 @Composable
 fun DrawingCanvas(modifier: Modifier = Modifier) {
-    val history = remember { mutableStateListOf<BrushStroke>() }
+    val strokeHistory = remember { mutableStateListOf<BrushStroke>() }
+    val redoStack = remember { mutableStateListOf<BrushStroke>() }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val context = LocalContext.current
+//    val density = LocalDensity.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    val startActivityForResultLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (it.resultCode == Activity.RESULT_OK) {
+            if (it.data != null && it.data!!.data != null) {
+                val uri: Uri = it.data!!.data!!
+                context.contentResolver.openOutputStream(uri)?.let { op ->
+                    bitmap?.compress(Bitmap.CompressFormat.PNG, 100, op)
+                }
+            } else Toast.makeText(context, "Some error occurred", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                if (strokeHistory.isNotEmpty()) {
+                    val lastStroke = strokeHistory.removeLast()
+                    redoStack.add(lastStroke)
+                }
+            }) {
                 Image(painterResource(id = R.drawable.ic_undo), contentDescription = "Undo")
             }
 
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                createFile(launcher = startActivityForResultLauncher)
+            }) {
                 Image(painterResource(id = R.drawable.ic_floppy_disk), contentDescription = "Save")
             }
 
@@ -52,13 +85,17 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                 Image(painterResource(id = R.drawable.ic_paint_brush), contentDescription = "Brush")
             }
 
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                if (redoStack.isNotEmpty()) {
+                    val latestStroke = redoStack.removeLast()
+                    strokeHistory.add(latestStroke)
+                }
+            }) {
                 Image(
                     painterResource(id = R.drawable.ic_undo),
                     contentDescription = "Redo",
                     modifier = Modifier
                         .scale(scaleX = -1f, scaleY = 1f)
-                        .clickable { }
                 )
             }
         }
@@ -66,6 +103,12 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
         Canvas(modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .onGloballyPositioned { layoutCoordinates ->
+                val width = layoutCoordinates.size.width
+                val height = layoutCoordinates.size.height
+
+                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            }
             .pointerInput(true) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
@@ -74,10 +117,11 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                         endOffset = change.position
                     )
 
-                    history.add(stroke)
+                    strokeHistory.add(stroke)
+                    redoStack.clear()
                 }
             }) {
-            history.forEach { stroke ->
+            strokeHistory.forEach { stroke ->
                 drawLine(
                     start = stroke.startOffset,
                     end = stroke.endOffset,

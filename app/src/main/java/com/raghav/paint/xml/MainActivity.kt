@@ -1,14 +1,12 @@
 package com.raghav.paint.xml
 
 import android.app.Activity
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.github.dhaval2404.colorpicker.MaterialColorPickerDialog
@@ -16,6 +14,7 @@ import com.github.dhaval2404.colorpicker.model.ColorShape
 import com.github.dhaval2404.colorpicker.model.ColorSwatch
 import com.google.android.material.slider.RangeSlider
 import com.raghav.paint.databinding.ActivityMainBinding
+import com.raghav.paint.util.createFile
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         //in form of PNG, in the storage
         binding.btnSave.setOnClickListener {
 
-            createFile("sample.png", startActivityForResult)
+            createFile(launcher = startActivityForResult)
         }
         //the color button will allow the user to select the color of his brush
         binding.btnColor.setOnClickListener {
@@ -98,23 +97,5 @@ class MainActivity : AppCompatActivity() {
                 binding.drawView.init(height, width)
             }
         })
-
-
-    }
-
-    fun createFile(fileName: String, launcher: ActivityResultLauncher<Intent>) {
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        // file type
-        intent.type = "image/*"
-        // file name
-        intent.putExtra(Intent.EXTRA_TITLE, fileName)
-        intent.addFlags(
-            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                    or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
-        )
-        launcher.launch(intent)
     }
 }
