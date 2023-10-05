@@ -1,6 +1,7 @@
 package com.raghav.paint
 
 import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,28 +29,32 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.dhaval2404.colorpicker.MaterialColorPickerDialog
+import com.github.dhaval2404.colorpicker.model.ColorShape
+import com.github.dhaval2404.colorpicker.model.ColorSwatch
 import com.raghav.paint.ui.theme.PaintTheme
-import com.raghav.paint.util.saveBitmapAsPNG
+import com.raghav.paint.util.ERROR_SAVING
 
 @Composable
 fun DrawingCanvas(modifier: Modifier = Modifier) {
     val strokeHistory = remember { mutableStateListOf<BrushStroke>() }
     val redoStack = remember { mutableStateListOf<BrushStroke>() }
-    var bitmap: Bitmap? by remember { mutableStateOf(null) }
     var canvasWidth by remember { mutableStateOf(-1) }
     var canvasHeight by remember { mutableStateOf(-1) }
     val context = LocalContext.current
+    var currentColor by remember { mutableStateOf(Color.Green) }
 
     val saveImageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("image/*")
     ) {
         it?.let { uri ->
-            saveBitmapAsPNG(context, bitmap, uri)
-        } ?: Toast.makeText(
-            context,
-            "Your project was not saved!\nPlease try again!",
-            Toast.LENGTH_SHORT
-        ).show()
+            val bitmap = Bitmap.createBitmap(canvasWidth, canvasHeight, Bitmap.Config.ARGB_8888)
+            repeat(10_00_000) {}
+            val outputStream = context.contentResolver.openOutputStream(uri)
+            outputStream?.use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            }
+        } ?: Toast.makeText(context, ERROR_SAVING, Toast.LENGTH_SHORT).show()
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -65,15 +70,23 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
             }
 
             IconButton(onClick = {
-                saveImageLauncher.launch("image.png")
-                bitmap = Bitmap.createBitmap(canvasWidth, canvasHeight, Bitmap.Config.ARGB_8888)
-
+                Log.d("canvas", "$canvasHeight $canvasWidth")
+                saveImageLauncher.launch("sample.png")
             }) {
                 Image(painterResource(id = R.drawable.ic_floppy_disk), contentDescription = "Save")
             }
 
             IconButton(onClick = {
-
+                MaterialColorPickerDialog
+                    .Builder(context)
+                    .setTitle("Pick Theme")
+                    .setColorShape(ColorShape.SQAURE)
+                    .setColorSwatch(ColorSwatch._300)
+                    .setColorListener { color, colorHex ->
+                        Log.d("canvas", "$color $colorHex")
+                        currentColor = Color(color)
+                    }
+                    .show()
             }) {
                 Image(
                     painterResource(id = R.drawable.ic_colorpicker),
@@ -108,7 +121,8 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                     change.consume()
                     val stroke = BrushStroke(
                         startOffset = change.position - dragAmount,
-                        endOffset = change.position
+                        endOffset = change.position,
+                        color = currentColor
                     )
 
                     strokeHistory.add(stroke)
