@@ -1,4 +1,4 @@
-package com.raghav.paint
+package com.raghav.paint.xml
 
 import android.app.Activity
 import android.content.Intent
@@ -33,8 +33,9 @@ class MainActivity : AppCompatActivity() {
                     if (it.data != null && it.data!!.data != null) {
                         val bmp = binding.drawView.save()
                         val uri: Uri = it.data!!.data!!
-                        val op = contentResolver.openOutputStream(uri)
-                        bmp?.compress(Bitmap.CompressFormat.PNG, 100, op)
+                        contentResolver.openOutputStream(uri)?.let { op ->
+                            bmp.compress(Bitmap.CompressFormat.PNG, 100, op)
+                        }
                     } else {
                         Toast.makeText(this, "Some error ocured", Toast.LENGTH_SHORT).show()
                     }
