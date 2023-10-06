@@ -86,14 +86,14 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                     Pink80,
                     RoundedCornerShape(bottomEndPercent = 65, bottomStartPercent = 65)
                 )
-                .padding(vertical = 6.dp),
+                .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Image(
                 painterResource(id = R.drawable.ic_undo),
                 contentDescription = "Undo",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clickable {
                         if (undoHistory.isNotEmpty()) {
                             val lastStroke = undoHistory.removeLast()
@@ -106,7 +106,7 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                 painterResource(id = R.drawable.ic_floppy_disk),
                 contentDescription = "Save",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clickable {
                         saveImageLauncher.launch("sample.png")
                     })
@@ -115,7 +115,7 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                 painterResource(id = R.drawable.ic_colorpicker),
                 contentDescription = "Color Picker",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clickable {
                         MaterialColorPickerDialog
                             .Builder(context)
@@ -134,7 +134,7 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                 painterResource(id = R.drawable.ic_paint_brush),
                 contentDescription = "Brush",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clickable {
                         isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
                     }
@@ -144,7 +144,7 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                 painterResource(id = R.drawable.ic_undo),
                 contentDescription = "Redo",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .scale(scaleX = -1f, scaleY = 1f)
                     .clickable {
                         if (redoHistory.isNotEmpty()) {
