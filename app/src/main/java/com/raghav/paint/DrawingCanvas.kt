@@ -27,8 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -42,10 +45,12 @@ import com.raghav.paint.util.ERROR_SAVING
 
 @Composable
 fun DrawingCanvas(modifier: Modifier = Modifier) {
-    val strokeHistory = remember { mutableStateListOf<BrushStroke>() }
-    val redoStack = remember { mutableStateListOf<BrushStroke>() }
+    val undoHistory = remember { mutableStateListOf<BrushStroke>() }
+    val redoHistory = remember { mutableStateListOf<BrushStroke>() }
+
     var canvasWidth by remember { mutableStateOf(-1) }
     var canvasHeight by remember { mutableStateOf(-1) }
+
     val context = LocalContext.current
     var currentColor by remember { mutableStateOf(Color.Green) }
 
@@ -56,8 +61,8 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
         ActivityResultContracts.CreateDocument("image/*")
     ) {
         it?.let { uri ->
-            val bitmap = Bitmap.createBitmap(canvasWidth, canvasHeight, Bitmap.Config.ARGB_8888)
-            repeat(10_00_000) {}
+            val bitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888)
+//            Handler(Looper.getMainLooper()).postDelayed({}, 2000)
             val outputStream = context.contentResolver.openOutputStream(uri)
             outputStream?.use { stream ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
@@ -69,9 +74,9 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             IconButton(onClick = {
-                if (strokeHistory.isNotEmpty()) {
-                    val lastStroke = strokeHistory.removeLast()
-                    redoStack.add(lastStroke)
+                if (undoHistory.isNotEmpty()) {
+                    val lastStroke = undoHistory.removeLast()
+                    redoHistory.add(lastStroke)
                 }
             }) {
                 Image(painterResource(id = R.drawable.ic_undo), contentDescription = "Undo")
@@ -109,9 +114,9 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
             }
 
             IconButton(onClick = {
-                if (redoStack.isNotEmpty()) {
-                    val latestStroke = redoStack.removeLast()
-                    strokeHistory.add(latestStroke)
+                if (redoHistory.isNotEmpty()) {
+                    val latestStroke = redoHistory.removeLast()
+                    undoHistory.add(latestStroke)
                 }
             }) {
                 Image(
@@ -141,34 +146,50 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
-                .pointerInput(true) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        val stroke = BrushStroke(
-                            startOffset = change.position - dragAmount,
-                            endOffset = change.position,
-                            color = currentColor,
-                            strokeWidth = brushThickness.toDp()
-                        )
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = {
+                            Log.d("canvas", "drag start")
+                            val stroke = BrushStroke(
+                                points = mutableStateListOf(it),
+                                color = currentColor,
+                                strokeWidth = brushThickness.toDp()
+                            )
 
-                        strokeHistory.add(stroke)
-                        redoStack.clear()
+                            undoHistory.add(stroke)
+                            redoHistory.clear()
+                        }
+                    ) { change, dragAmount ->
+                        change.consume()
+                        undoHistory[undoHistory.lastIndex].points.add(change.position)
                     }
                 }) {
             canvasWidth = size.width.toInt()
             canvasHeight = size.height.toInt()
 
-            strokeHistory.forEach { stroke ->
-                drawLine(
-                    start = stroke.startOffset,
-                    end = stroke.endOffset,
+            undoHistory.forEach { stroke ->
+                drawPath(
+                    path = stroke.points.toPath(),
                     color = stroke.color,
-                    strokeWidth = stroke.strokeWidth.toPx(),
-                    cap = StrokeCap.Round
+                    style = Stroke(
+                        width = stroke.strokeWidth.toPx(),
+                        cap = StrokeCap.Round
+                    )
                 )
             }
         }
     }
+}
+
+fun List<Offset>.toPath(): Path {
+    val path = Path()
+
+    path.moveTo(this.first().x, this.first().y)
+    this.drop(1).forEach { offset ->
+        path.lineTo(offset.x, offset.y)
+    }
+
+    return path
 }
 
 @Preview(showBackground = true, showSystemUi = true)
