@@ -9,6 +9,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import com.github.dhaval2404.colorpicker.MaterialColorPickerDialog
 import com.github.dhaval2404.colorpicker.model.ColorShape
 import com.github.dhaval2404.colorpicker.model.ColorSwatch
 import com.raghav.paint.ui.theme.PaintTheme
+import com.raghav.paint.ui.theme.Pink80
 import com.raghav.paint.util.ERROR_SAVING
 
 @Composable
@@ -70,62 +73,86 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
         } ?: Toast.makeText(context, ERROR_SAVING, Toast.LENGTH_SHORT).show()
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            IconButton(onClick = {
-                if (undoHistory.isNotEmpty()) {
-                    val lastStroke = undoHistory.removeLast()
-                    redoHistory.add(lastStroke)
-                }
-            }) {
-                Image(painterResource(id = R.drawable.ic_undo), contentDescription = "Undo")
-            }
-
-            IconButton(onClick = {
-                Log.d("canvas", "$canvasHeight $canvasWidth")
-                saveImageLauncher.launch("sample.png")
-            }) {
-                Image(painterResource(id = R.drawable.ic_floppy_disk), contentDescription = "Save")
-            }
-
-            IconButton(onClick = {
-                MaterialColorPickerDialog
-                    .Builder(context)
-                    .setTitle("Pick Theme")
-                    .setColorShape(ColorShape.SQAURE)
-                    .setColorSwatch(ColorSwatch._300)
-                    .setColorListener { color, colorHex ->
-                        Log.d("canvas", "$color $colorHex")
-                        currentColor = Color(color)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    Pink80,
+                    RoundedCornerShape(bottomEndPercent = 65, bottomStartPercent = 65)
+                )
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Image(
+                painterResource(id = R.drawable.ic_undo),
+                contentDescription = "Undo",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable {
+                        if (undoHistory.isNotEmpty()) {
+                            val lastStroke = undoHistory.removeLast()
+                            redoHistory.add(lastStroke)
+                        }
                     }
-                    .show()
-            }) {
-                Image(
-                    painterResource(id = R.drawable.ic_colorpicker),
-                    contentDescription = "Color Picker"
-                )
-            }
+            )
 
-            IconButton(onClick = {
-                isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
-            }) {
-                Image(painterResource(id = R.drawable.ic_paint_brush), contentDescription = "Brush")
-            }
+            Image(
+                painterResource(id = R.drawable.ic_floppy_disk),
+                contentDescription = "Save",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable {
+                        saveImageLauncher.launch("sample.png")
+                    })
 
-            IconButton(onClick = {
-                if (redoHistory.isNotEmpty()) {
-                    val latestStroke = redoHistory.removeLast()
-                    undoHistory.add(latestStroke)
-                }
-            }) {
-                Image(
-                    painterResource(id = R.drawable.ic_undo),
-                    contentDescription = "Redo",
-                    modifier = Modifier
-                        .scale(scaleX = -1f, scaleY = 1f)
-                )
-            }
+            Image(
+                painterResource(id = R.drawable.ic_colorpicker),
+                contentDescription = "Color Picker",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable {
+                        MaterialColorPickerDialog
+                            .Builder(context)
+                            .setTitle("Pick Theme")
+                            .setColorShape(ColorShape.SQAURE)
+                            .setColorSwatch(ColorSwatch._300)
+                            .setColorListener { color, colorHex ->
+                                Log.d("canvas", "$color $colorHex")
+                                currentColor = Color(color)
+                            }
+                            .show()
+                    }
+            )
+
+            Image(
+                painterResource(id = R.drawable.ic_paint_brush),
+                contentDescription = "Brush",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable {
+                        isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
+                    }
+            )
+
+            Image(
+                painterResource(id = R.drawable.ic_undo),
+                contentDescription = "Redo",
+                modifier = Modifier
+                    .size(40.dp)
+                    .scale(scaleX = -1f, scaleY = 1f)
+                    .clickable {
+                        if (redoHistory.isNotEmpty()) {
+                            val latestStroke = redoHistory.removeLast()
+                            undoHistory.add(latestStroke)
+                        }
+                    }
+            )
         }
 
         AnimatedVisibility(visible = isBrushThicknessSliderVisible) {
