@@ -1,11 +1,13 @@
 package com.raghav.paint
 
-import android.graphics.Bitmap
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +38,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +49,8 @@ import com.github.dhaval2404.colorpicker.model.ColorSwatch
 import com.raghav.paint.ui.theme.PaintTheme
 import com.raghav.paint.ui.theme.Pink80
 import com.raghav.paint.util.ERROR_SAVING
+import com.raghav.paint.util.captureCanvasScreenshot
+import com.raghav.paint.util.saveBitmapToStorage
 
 @Composable
 fun DrawingCanvas(modifier: Modifier = Modifier) {
@@ -60,17 +66,21 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
     var isBrushThicknessSliderVisible by remember { mutableStateOf(false) }
     var brushThickness by remember { mutableStateOf(10f) }
 
+    var isSavingImage by remember { mutableStateOf(false) }
+
+    val view = LocalView.current
+    val density = LocalDensity.current.density
+
     val saveImageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("image/*")
     ) {
         it?.let { uri ->
-            val bitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888)
-//            Handler(Looper.getMainLooper()).postDelayed({}, 2000)
-            val outputStream = context.contentResolver.openOutputStream(uri)
-            outputStream?.use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            }
+            val bitmap = captureCanvasScreenshot(view, density)
+            saveBitmapToStorage(context, uri, bitmap)
+
         } ?: Toast.makeText(context, ERROR_SAVING, Toast.LENGTH_SHORT).show()
+
+        isSavingImage = false
     }
 
     Column(
@@ -79,94 +89,104 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
             .background(Color.White)
     ) {
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    Pink80,
-                    RoundedCornerShape(bottomEndPercent = 65, bottomStartPercent = 65)
-                )
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        AnimatedVisibility(
+            visible = !isSavingImage,
+            enter = fadeIn(animationSpec = tween(durationMillis = 0)),
+            exit = fadeOut(animationSpec = tween(delayMillis = 400))
         ) {
-            Image(
-                painterResource(id = R.drawable.ic_undo),
-                contentDescription = "Undo",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable {
-                        if (undoHistory.isNotEmpty()) {
-                            val lastStroke = undoHistory.removeLast()
-                            redoHistory.add(lastStroke)
-                        }
-                    }
-            )
 
-            Image(
-                painterResource(id = R.drawable.ic_floppy_disk),
-                contentDescription = "Save",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable {
-                        saveImageLauncher.launch("sample.png")
-                    })
-
-            Image(
-                painterResource(id = R.drawable.ic_colorpicker),
-                contentDescription = "Color Picker",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable {
-                        MaterialColorPickerDialog
-                            .Builder(context)
-                            .setTitle("Pick Theme")
-                            .setColorShape(ColorShape.SQAURE)
-                            .setColorSwatch(ColorSwatch._300)
-                            .setColorListener { color, colorHex ->
-                                Log.d("canvas", "$color $colorHex")
-                                currentColor = Color(color)
+            Column {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Pink80,
+                            RoundedCornerShape(bottomEndPercent = 65, bottomStartPercent = 65)
+                        )
+                        .padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Image(
+                        painterResource(id = R.drawable.ic_undo),
+                        contentDescription = "Undo",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                if (undoHistory.isNotEmpty()) {
+                                    val lastStroke = undoHistory.removeLast()
+                                    redoHistory.add(lastStroke)
+                                }
                             }
-                            .show()
-                    }
-            )
+                    )
 
-            Image(
-                painterResource(id = R.drawable.ic_paint_brush),
-                contentDescription = "Brush",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable {
-                        isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
-                    }
-            )
+                    Image(
+                        painterResource(id = R.drawable.ic_floppy_disk),
+                        contentDescription = "Save",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                isSavingImage = true
+                                saveImageLauncher.launch("sample.png")
+                            })
 
-            Image(
-                painterResource(id = R.drawable.ic_undo),
-                contentDescription = "Redo",
-                modifier = Modifier
-                    .size(32.dp)
-                    .scale(scaleX = -1f, scaleY = 1f)
-                    .clickable {
-                        if (redoHistory.isNotEmpty()) {
-                            val latestStroke = redoHistory.removeLast()
-                            undoHistory.add(latestStroke)
-                        }
-                    }
-            )
-        }
+                    Image(
+                        painterResource(id = R.drawable.ic_colorpicker),
+                        contentDescription = "Color Picker",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                MaterialColorPickerDialog
+                                    .Builder(context)
+                                    .setTitle("Pick Theme")
+                                    .setColorShape(ColorShape.SQAURE)
+                                    .setColorSwatch(ColorSwatch._300)
+                                    .setColorListener { color, colorHex ->
+                                        Log.d("canvas", "$color $colorHex")
+                                        currentColor = Color(color)
+                                    }
+                                    .show()
+                            }
+                    )
 
-        AnimatedVisibility(visible = isBrushThicknessSliderVisible) {
-            Slider(
-                value = brushThickness,
-                onValueChange = { brushThickness = it },
-                valueRange = 2f..70f,
-                steps = 98,
-                colors = SliderDefaults.colors(
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent
-                ),
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+                    Image(
+                        painterResource(id = R.drawable.ic_paint_brush),
+                        contentDescription = "Brush",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
+                            }
+                    )
+
+                    Image(
+                        painterResource(id = R.drawable.ic_undo),
+                        contentDescription = "Redo",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .scale(scaleX = -1f, scaleY = 1f)
+                            .clickable {
+                                if (redoHistory.isNotEmpty()) {
+                                    val latestStroke = redoHistory.removeLast()
+                                    undoHistory.add(latestStroke)
+                                }
+                            }
+                    )
+                }
+
+                AnimatedVisibility(visible = isBrushThicknessSliderVisible) {
+                    Slider(
+                        value = brushThickness,
+                        onValueChange = { brushThickness = it },
+                        valueRange = 2f..70f,
+                        steps = 98,
+                        colors = SliderDefaults.colors(
+                            activeTickColor = Color.Transparent,
+                            inactiveTickColor = Color.Transparent
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
         }
 
         Canvas(
