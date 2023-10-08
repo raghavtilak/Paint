@@ -1,6 +1,7 @@
 package com.raghav.paint.xml
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
@@ -18,6 +19,7 @@ import com.raghav.paint.util.ERROR_SAVING
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
+    private var currentColor = Color.GREEN
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,14 +56,19 @@ class MainActivity : AppCompatActivity() {
                 .setColorListener { color, colorHex ->
                     // Handle Color Selection
                     binding.drawView.setColor(color)
+                    currentColor = color
                 }
                 .show()
         }
         // the button will toggle the visibility of the RangeBar/RangeSlider
         binding.btnStroke.setOnClickListener {
-            if (binding.rangebar.visibility == View.VISIBLE)
-                binding.rangebar.visibility = View.GONE
-            else binding.rangebar.visibility = View.VISIBLE
+            binding.drawView.setColor(currentColor)
+            configureRangeBarVisibility()
+        }
+
+        binding.btnEraser.setOnClickListener {
+            binding.drawView.setColor(DrawView.backgroundColor)
+            configureRangeBarVisibility()
         }
 
         //set the range of the RangeSlider
@@ -85,5 +92,11 @@ class MainActivity : AppCompatActivity() {
                 binding.drawView.init(height, width)
             }
         })
+    }
+
+    private fun configureRangeBarVisibility() {
+        if (binding.rangebar.visibility == View.VISIBLE)
+            binding.rangebar.visibility = View.GONE
+        else binding.rangebar.visibility = View.VISIBLE
     }
 }

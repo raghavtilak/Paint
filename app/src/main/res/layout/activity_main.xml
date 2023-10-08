@@ -28,7 +28,7 @@
 
             <ImageButton
                 android:id="@+id/btn_save"
-                android:layout_width="104dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:src="@drawable/ic_floppy_disk"
@@ -49,6 +49,14 @@
                 android:layout_weight="1"
                 android:src="@drawable/ic_paint_brush"
                 android:text="Stroke" />
+
+            <ImageButton
+                android:id="@+id/btn_eraser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_eraser"
+                android:text="Eraser" />
 
             <ImageButton
                 android:id="@+id/btn_redo"

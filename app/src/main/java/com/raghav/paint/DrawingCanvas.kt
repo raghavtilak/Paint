@@ -62,6 +62,8 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
     var currentColor by remember { mutableStateOf(Color.Green) }
+    var strokeColor by remember { mutableStateOf(Color.Green) }
+    var canvasColor by remember { mutableStateOf(Color.White) }
 
     var isBrushThicknessSliderVisible by remember { mutableStateOf(false) }
     var brushThickness by remember { mutableStateOf(10f) }
@@ -143,6 +145,7 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                                     .setColorListener { color, colorHex ->
                                         Log.d("canvas", "$color $colorHex")
                                         currentColor = Color(color)
+                                        strokeColor = currentColor
                                     }
                                     .show()
                             }
@@ -154,6 +157,18 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .size(32.dp)
                             .clickable {
+                                currentColor = strokeColor
+                                isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
+                            }
+                    )
+
+                    Image(
+                        painterResource(id = R.drawable.ic_eraser),
+                        contentDescription = "Eraser",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                currentColor = canvasColor
                                 isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
                             }
                     )
