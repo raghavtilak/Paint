@@ -32,10 +32,6 @@ class DrawView(context: Context, attributeSet: AttributeSet) : View(context, att
     private lateinit var mCanvas: Canvas
     private val mBitmapPaint = Paint(Paint.DITHER_FLAG)
 
-    companion object {
-        var backgroundColor: Int = 0
-    }
-
     init {
         mPaint.apply {
             isAntiAlias = true // smoothens the drawings of the user
@@ -94,7 +90,7 @@ class DrawView(context: Context, attributeSet: AttributeSet) : View(context, att
         //to draw the background of the canvas
         canvas.save()
         //DEFAULT color of the canvas
-        backgroundColor = Color.WHITE
+        val backgroundColor = Color.WHITE
         mCanvas.drawColor(backgroundColor)
 
         // now, we iterate over stroke history and draw each path on the canvas

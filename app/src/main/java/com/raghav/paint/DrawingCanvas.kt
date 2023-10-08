@@ -66,7 +66,10 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
     var canvasColor by remember { mutableStateOf(Color.White) }
 
     var isBrushThicknessSliderVisible by remember { mutableStateOf(false) }
+    var isEraserThicknessSliderVisible by remember { mutableStateOf(false) }
     var brushThickness by remember { mutableStateOf(10f) }
+    var eraserThickness by remember { mutableStateOf(10f) }
+    var useEraser by remember { mutableStateOf(false) }
 
     var isSavingImage by remember { mutableStateOf(false) }
 
@@ -157,7 +160,9 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .size(32.dp)
                             .clickable {
+                                useEraser = false
                                 currentColor = strokeColor
+                                isEraserThicknessSliderVisible = false
                                 isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
                             }
                     )
@@ -168,8 +173,10 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .size(32.dp)
                             .clickable {
+                                useEraser = true
                                 currentColor = canvasColor
-                                isBrushThicknessSliderVisible = !isBrushThicknessSliderVisible
+                                isBrushThicknessSliderVisible = false
+                                isEraserThicknessSliderVisible = !isEraserThicknessSliderVisible
                             }
                     )
 
@@ -201,6 +208,20 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
+
+                AnimatedVisibility(visible = isEraserThicknessSliderVisible) {
+                    Slider(
+                        value = eraserThickness,
+                        onValueChange = { eraserThickness = it },
+                        valueRange = 2f..70f,
+                        steps = 98,
+                        colors = SliderDefaults.colors(
+                            activeTickColor = Color.Transparent,
+                            inactiveTickColor = Color.Transparent
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
 
@@ -215,7 +236,10 @@ fun DrawingCanvas(modifier: Modifier = Modifier) {
                             val stroke = BrushStroke(
                                 points = mutableStateListOf(it),
                                 color = currentColor,
-                                strokeWidth = brushThickness.toDp()
+                                strokeWidth = if (!useEraser)
+                                    brushThickness.toDp()
+                                else
+                                    eraserThickness.toDp()
                             )
 
                             undoHistory.add(stroke)
