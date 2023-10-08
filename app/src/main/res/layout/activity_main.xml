@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".xml.MainActivity">
 
 
     <LinearLayout
@@ -74,7 +74,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <com.raghav.paint.DrawView
+    <com.raghav.paint.xml.DrawView
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

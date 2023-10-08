@@ -1,14 +1,10 @@
-package com.raghav.paint
+package com.raghav.paint.xml
 
-import android.app.Activity
-import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.github.dhaval2404.colorpicker.MaterialColorPickerDialog
@@ -16,6 +12,7 @@ import com.github.dhaval2404.colorpicker.model.ColorShape
 import com.github.dhaval2404.colorpicker.model.ColorSwatch
 import com.google.android.material.slider.RangeSlider
 import com.raghav.paint.databinding.ActivityMainBinding
+import com.raghav.paint.util.ERROR_SAVING
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,21 +24,16 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val startActivityForResult =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (it.resultCode == Activity.RESULT_OK) {
-                    if (it.data != null && it.data!!.data != null) {
-                        val bmp = binding.drawView.save()
-                        val uri: Uri = it.data!!.data!!
-                        val op = contentResolver.openOutputStream(uri)
-                        bmp?.compress(Bitmap.CompressFormat.PNG, 100, op)
-                    } else {
-                        Toast.makeText(this, "Some error ocured", Toast.LENGTH_SHORT).show()
+        val saveImageLauncher =
+            registerForActivityResult(ActivityResultContracts.CreateDocument("image/*")) {
+                it?.let { uri ->
+                    val bitmap = binding.drawView.save()
+                    contentResolver.openOutputStream(uri)?.use { op ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, op)
                     }
-
-
-                }
+                } ?: Toast.makeText(this, ERROR_SAVING, Toast.LENGTH_SHORT).show()
             }
+
         //the undo button will remove the most recent stroke from the canvas
         binding.btnUndo.setOnClickListener { binding.drawView.undo() }
 
@@ -49,14 +41,10 @@ class MainActivity : AppCompatActivity() {
 
         //the save button will save the current canvas which is actually a bitmap
         //in form of PNG, in the storage
-        binding.btnSave.setOnClickListener {
+        binding.btnSave.setOnClickListener { saveImageLauncher.launch("sample.png") }
 
-            createFile("sample.png", startActivityForResult)
-        }
         //the color button will allow the user to select the color of his brush
         binding.btnColor.setOnClickListener {
-
-
             MaterialColorPickerDialog
                 .Builder(this)                            // Pass Activity Instance
                 .setTitle("Pick Theme")                // Default "Choose Color"
@@ -97,23 +85,5 @@ class MainActivity : AppCompatActivity() {
                 binding.drawView.init(height, width)
             }
         })
-
-
-    }
-
-    fun createFile(fileName: String, launcher: ActivityResultLauncher<Intent>) {
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        // file type
-        intent.type = "image/*"
-        // file name
-        intent.putExtra(Intent.EXTRA_TITLE, fileName)
-        intent.addFlags(
-            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                    or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
-        )
-        launcher.launch(intent)
     }
 }
